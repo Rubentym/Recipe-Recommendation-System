@@ -1,0 +1,30 @@
+# You would need a dataset of recipes with attributes such as ingredients, cuisine, dietary info.
+# Then, you can build a recommendation system based on user preferences.
+
+# Example using a dataset and collaborative filtering with Surprise library:
+
+from surprise import Dataset, Reader, KNNBasic
+import pandas as pd
+
+# Load dataset
+data = Dataset.load_builtin('ml-100k')
+df = pd.DataFrame(data.raw_ratings, columns=['user', 'item', 'rating', 'timestamp'])
+
+# Prepare data for Surprise library
+reader = Reader(rating_scale=(1, 5))
+data = Dataset.load_from_df(df[['user', 'item', 'rating']], reader)
+
+# Build a user-based collaborative filtering model
+trainset = data.build_full_trainset()
+sim_options = {'name': 'cosine', 'user_based': True}
+model = KNNBasic(sim_options=sim_options)
+model.fit(trainset)
+
+# Get top recommendations for a user
+user_id = '196'
+top_n = 10
+recommendations = model.get_neighbors(trainset.to_inner_uid(user_id), k=top_n)
+
+print("Top Recommendations for User", user_id)
+for idx, item_id in enumerate(recommendations):
+    print(f"{idx+1}. Item ID:", trainset.to_raw_iid(item_id))
